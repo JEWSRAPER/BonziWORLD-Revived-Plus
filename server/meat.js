@@ -473,9 +473,20 @@ let userCommands = {
             if (settings.bonziColors.indexOf(color) == -1)
                 return;
             
+            // Restrict god and pope colors (including variants) to admin only
+            if ((color === "god" || color === "pope" || color === "clippypope" || color === "dogpope" || color === "peedy_pope") && this.private.runlevel < 3) {
+                this.socket.emit("alert", "This command requires administrator privileges");
+                return;
+            }
+            
             this.public.color = color;
         } else {
+            // When picking a random color, filter out restricted colors for non-admin users
             let bc = settings.bonziColors;
+            if (this.private.runlevel < 3) {
+                // Non-admin: filter out restricted colors
+                bc = bc.filter(c => c !== "god" && c !== "pope" && c !== "clippypope" && c !== "dogpope" && c !== "peedy_pope");
+            }
             this.public.color = bc[
                 Math.floor(Math.random() * bc.length)
             ];
@@ -484,7 +495,10 @@ let userCommands = {
         this.room.updateUser(this);
     },
     "pope": function() {
-        
+        if (this.private.runlevel < 3) {
+            this.socket.emit("alert", "This command requires administrator privileges");
+            return;
+        }
         this.public.color = "pope";
         this.room.updateUser(this);
     },
